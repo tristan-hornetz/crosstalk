@@ -222,7 +222,7 @@ int lfb_read(void *mem) {
     }
     for (; i < 256; i++) {
         uint64_t t = measure_access_time(mem + page_size * i);
-        if (t < 200) return i;
+        if (t < cache_hit_timing) return i;
     }
     return -1;
 }
