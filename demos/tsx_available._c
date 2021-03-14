@@ -1,0 +1,46 @@
+#include <stdio.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <unistd.h>
+
+jmp_buf buf;
+
+static __attribute__((always_inline)) inline unsigned int xbegin(void) {
+    unsigned status;
+    //asm volatile("xbegin 1f \n 1:" : "=a"(status) : "a"(-1UL) : "memory");
+    asm volatile(".byte 0xc7,0xf8,0x00,0x00,0x00,0x00" : "=a"(status) : "a"(-1UL) : "memory");
+    return status == ~0u;
+}
+static __attribute__((always_inline)) inline void xend(void) {
+    //asm volatile("xend" ::: "memory");
+    asm volatile(".byte 0x0f; .byte 0x01; .byte 0xd5" ::: "memory");
+}
+
+static void unblock_signal(int signum __attribute__((__unused__))) {
+    sigset_t sigs;
+    sigemptyset(&sigs);
+    sigaddset(&sigs, signum);
+    sigprocmask(SIG_UNBLOCK, &sigs, NULL);
+}
+
+static void illegal_instruction_handler(int signum) {
+    (void) signum;
+    unblock_signal(SIGILL);
+    longjmp(buf, 1);
+}
+
+int main(){
+#ifndef NOTSX
+    if (signal(SIGILL, illegal_instruction_handler) != SIG_ERR) {
+        if(!setjmp(buf)){
+            if(xbegin()){
+                xend();
+            }
+            printf("TSX_AVAILABLE");
+            return 0;
+        }
+    }
+#endif
+    printf("NO_TSX");
+    return 0;
+}
