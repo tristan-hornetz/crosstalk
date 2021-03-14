@@ -10,13 +10,11 @@
 
 #define TIMES_TEN(X) X X X X X X X X X X
 int _page_size = 0x1000;
-int writer_cpu = 3, reader_cpu = 7, pid = 0;
+int writer_cpu = 3, reader_cpu = 7, offcore_cpu = 1, pid = 0, pid2 = 0;
 
 uint32_t vector_hits[64][256];
 uint8_t vector[64];
 
-int offcore_cpu = 1;
-int pid2 = 0;
 
 inline uint64_t time_convert(struct timespec *spec) { return (1000000000 * (uint64_t) spec->tv_sec) + spec->tv_nsec; }
 
