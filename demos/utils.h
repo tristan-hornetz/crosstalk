@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <string.h>
+#include "../primitives/basic_primitives.h"
 
 #ifdef TSX_AVAILABLE
 #define READ_SUCCESS_THRESHOLD 1000
@@ -111,8 +112,8 @@ uint8_t get_byte_32(){
 
 int rdrand_section_changed(void* mem, uint8_t byte_32){
     int success = 0;
-    for(int i = 0; i < REPS; i++){
-        success += lfb_read_offset(mem, 32) == byte_32;
+    for(int i = 0; i < REPS*3; i++){
+        success += lfb_read_basic(mem, 32) == byte_32;
     }
     return success == 0;
 }

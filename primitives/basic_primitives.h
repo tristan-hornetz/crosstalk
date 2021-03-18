@@ -19,4 +19,6 @@ int lfb_read_offset(void *mem, int offset);
 
 void lfb_partial_vector_read(void* mem, uint8_t* buf, int start, int end);
 
+int lfb_read_basic(void *mem, int offset);
+
 #endif //MELTDOWN_BASIC_PRIMITIVES_H

