@@ -60,8 +60,18 @@ The output should be similar to this:
 Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz************************
  ```
 
-If the output is even remotely similar to your CPU's Brand String, 
-your system is vulnerable.
+## Demo #2: Observing RDRAND calls
+
+One instruction that interferes with the global staging buffer is _rdrand_, which invokes the hardware-based
+random number generator. In this demo, a victim thread invokes _rdrand_ every few seconds. 
+An attacker thread on another physical core then attempts to detect the instruction call an forward the result.
+The forwarded number will likely not match the original number completely, but even a slightly similar result
+may allow an attacker to reconstruct a cryptographic key or similar protected data.
+
+The demo can be started with 
+```shell
+./demo_rdrand
+ ```
 
 ## Acknowledgements
 
