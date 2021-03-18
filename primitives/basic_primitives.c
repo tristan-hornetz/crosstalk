@@ -203,11 +203,6 @@ int lfb_read_offset(void *mem, int offset) {
     return lfb_read_taa(mem, offset);
 }
 
-void lfb_vector_read(void* mem, uint8_t* buf){
-    for(int i = 0; i < 64; i++){
-        buf[i] = (uint8_t) lfb_read_offset(mem, i) % 128;
-    }
-}
 #else
 
 static inline __attribute__((always_inline)) void lfb_leak(void *mem, uint8_t *ptr) {
@@ -240,13 +235,19 @@ int lfb_read_offset(void *mem, int offset) {
     return -1;
 }
 
+#endif
+
 void lfb_vector_read(void* mem, uint8_t* buf){
     for(int i = 0; i < 64; i++){
-        buf[i] = (uint8_t) lfb_read_offset(mem, i);
+        buf[i] = (uint8_t) lfb_read_offset(mem, i) % 128;
     }
 }
 
-#endif
+void lfb_partial_vector_read(void* mem, uint8_t* buf, int start, int end){
+    for(int i = start; i < end; i++){
+        buf[i] = (uint8_t) lfb_read_offset(mem, i) % 128;
+    }
+}
 
 /**
  * Init function, should be called before any other function from this file is used

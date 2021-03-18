@@ -56,7 +56,7 @@ The demo can be started with
  ```
 The output should be similar to this:
 
-```shell
+```
 Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz************************
  ```
 
