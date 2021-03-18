@@ -92,7 +92,7 @@ void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fil
         lfb_partial_vector_read(mem, vector, start, end);
         for (int i = start; i < end; i++) {
             int value = (int) vector[i];
-            if (value > 0 && value < 127) vector_hits[i][value & 0xFF]++;
+            vector_hits[i][value & 0xFF]++;
         }
     }
     if(fill_complete_buffer) fill_result_buffer(buffer, 0, 64);
@@ -111,7 +111,7 @@ uint8_t get_byte_32(){
 
 int rdrand_section_changed(void* mem, uint8_t byte_32){
     int success = 0;
-    for(int i = 0; i < REPS*3; i++){
+    for(int i = 0; i < REPS; i++){
         success += lfb_read_offset(mem, 32) == byte_32;
     }
     return success == 0;
