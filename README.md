@@ -76,7 +76,8 @@ The demo can be started with
  ```
 
 Note: The attacker will occasionally pick up noise instead of an _rdrand_ value. This can be mitigated by quitting all 
-background applications.
+background applications. During testing, we noticed that even running a graphical session manager can
+mess with the leaked values.
 
 ## Acknowledgements
 

