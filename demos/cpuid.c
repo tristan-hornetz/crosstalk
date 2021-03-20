@@ -2,23 +2,10 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <sched.h>
 #include <signal.h>
 #include <sys/mman.h>
 #include "utils.h"
-
-
-#ifdef TSX_AVAILABLE
-#define READ_SUCCESS_THRESHOLD 1000
-#define REPS 5000
-#else
-#define READ_SUCCESS_THRESHOLD 5000
-#define REPS 20000
-#endif
-
 
 
 void set_up_victim(int segment) {

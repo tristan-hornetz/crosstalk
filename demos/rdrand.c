@@ -1,11 +1,7 @@
 #include "../primitives/basic_primitives.h"
-#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <sched.h>
 #include <signal.h>
 #include <sys/mman.h>
 #include "utils.h"
