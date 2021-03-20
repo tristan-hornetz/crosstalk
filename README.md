@@ -2,8 +2,7 @@
 
 This repository contains Proof-of-Concept exploits for vulnerabilities described in [**CrossTalk: Speculative Data Leaks Across Cores Are Real**](https://download.vusec.net/papers/crosstalk_sp21.pdf) by Ragab, Milburn, Razavi, Bos and Giuffrida.
 
-The demos in this repository utilise primitives from our [RIDL PoC](https://github.com/tristan-hornetz/ridl).
-
+All demos utilise primitives from our [RIDL PoC](https://github.com/tristan-hornetz/ridl).
 Testing was done on an Intel Core i7-7700K CPU with Debian and Linux Kernel 5.10.0.
 
 ## Setup
@@ -60,18 +59,24 @@ The output should be similar to this:
 Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz************************
  ```
 
+If this is not the case, the other demos are also unlikely to work. Please note
+that some on some CPUs, you need to pass the _--taa_ parameter for this demo to function correctly.
+
 ## Demo #2: Observing RDRAND calls
 
 One instruction that interferes with the global staging buffer is _rdrand_, which invokes the hardware-based
 random number generator. In this demo, a victim thread invokes _rdrand_ every few seconds. 
-An attacker thread on another physical core then attempts to detect the instruction call an forward the result.
+An attacker thread on another physical core then attempts to detect the instruction and forwards the result.
 The forwarded number will likely not match the original number completely, but even a slightly similar result
-may allow an attacker to reconstruct a cryptographic key or similar protected data.
+may enable an attacker to reconstruct cryptographic key material.
 
 The demo can be started with 
 ```shell
 ./demo_rdrand
  ```
+
+Note: The attacker will occasionally pick up noise instead of an _rdrand_ value. This can be mitigated by quitting all 
+background applications.
 
 ## Acknowledgements
 

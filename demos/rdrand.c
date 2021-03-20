@@ -11,7 +11,7 @@
 #include "utils.h"
 
 
-#define CYCLE_LENGTH 5000000
+#define CYCLE_LENGTH 6000000
 
 
 
