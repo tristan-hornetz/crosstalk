@@ -79,6 +79,17 @@ Note: The attacker will occasionally pick up noise instead of an _rdrand_ value.
 background applications. During testing, we noticed that even running a graphical session manager can
 mess with the leaked values.
 
+## Demo #3: Covert channel across cores
+
+This demo shows how to transmit data across cores. To do so, we call _rdrand_ on one core until we get the char we want to transmit. Aftwards,
+we call _cpuid_ to signal that we're ready and another thread on a different physical core will attempt to pick up the char.
+The approach of this demo is based on the original approach described in the paper.
+
+The demo can be started with 
+```shell
+./demo_string_covert
+ ```
+
 ## Acknowledgements
 
 Parts of this project are based on the [Meltdown Proof-of-Concept](https://github.com/IAIK/meltdown).  
