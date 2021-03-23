@@ -7,10 +7,11 @@
 #include "utils.h"
 #include <string.h>
 
-
+#ifdef TSX_AVAILABLE
 #define CYCLE_LENGTH (uint64_t)600000
-
-
+#else
+#define CYCLE_LENGTH (uint64_t)2000000
+#endif
 void attacker_write_char(int cpu) {
     set_processor_affinity(cpu);
 
