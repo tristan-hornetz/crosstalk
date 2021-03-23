@@ -132,7 +132,7 @@ inline void *victim_cpuid(uint32_t leaf, int cpu) {
     }
 }
 
-bool cpuid_section_changed() {
+int cpuid_section_changed() {
     // TODO: Fill
 }
 

