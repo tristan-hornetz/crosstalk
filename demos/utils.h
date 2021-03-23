@@ -19,6 +19,10 @@
 
 
 #define TIMES_TEN(X) X X X X X X X X X X
+#define CPUID_BRAND_STRING_1_PRIMITIVE = 0x80000002
+#define CPUID_BRAND_STRING_3_PRIMITIVE = 0x80000004
+#define CPUID_THERMAL_STRING_PRIMITIVE = 0x6
+
 int _page_size = 0x1000;
 int writer_cpu = 3, reader_cpu = 7, offcore_cpu = 1, pid = 0, pid2 = 0;
 
@@ -103,20 +107,23 @@ void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fil
     else fill_result_buffer(buffer, start, end);
 }
 
-uint8_t get_byte_32(){
+// Primes a segment of the staging buffer with a known cpuid value,
+// then returns the first byte of that segment
+uint8_t prime_and_get_cpuid(uint32_t leaf){
     uint32_t ret;
     asm volatile(
-            "mov $0x80000004, %%eax\n"
+            "mov %1, %%eax\n"
             "cpuid\n"
     : "=a" (ret)
-    :);
+    : "r" (leaf));
     return (uint8_t)(ret & 0xFF);
 }
 
-int rdrand_section_changed(void* mem, uint8_t byte_32){
+// Checks whether a specific position on the staging buffer contains a known reference value
+int staging_buffer_byte_changed(void* mem, int pos, uint8_t reference){
     int success = 0;
     for(int i = 0; i < REPS*3; i++){
-        success += lfb_read_basic(mem, 32) == byte_32;
+        success += lfb_read_basic(mem, pos) == reference;
     }
     return success == 0;
 }
@@ -130,10 +137,6 @@ inline void *victim_cpuid(uint32_t leaf, int cpu) {
         ::"r"(leaf)
         : "eax", "ebx", "ecx", "edx");
     }
-}
-
-int cpuid_section_changed() {
-    // TODO: Fill
 }
 
 #endif //RIDL_UTILS_H

