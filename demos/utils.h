@@ -33,12 +33,11 @@ uint8_t byte_32;
 
 inline uint64_t time_convert(struct timespec *spec) { return (1000000000 * (uint64_t) spec->tv_sec) + spec->tv_nsec; }
 
-int sample_string_count = 4;
+int sample_string_count = 3;
 char *sample_strings[] = {
         "_The implications are worrisome.",
         "_This string is very secret. Don't read it!",
         "_You should not be able to read this.",
-        "_These characters were obtained from *NULL.",
 };
 
 void set_processor_affinity(int core_id) {
