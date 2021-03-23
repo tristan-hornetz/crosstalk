@@ -84,7 +84,7 @@ int main(int argc, char **args) {
     crosstalk_init(argc, args);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
     cpu_byte_0 = prime_and_get_cpuid(CPUID_BRAND_STRING_1_PRIMITIVE);
-    thermal_byte_0 prime_and_get_cpuid(CPUID_THERMAL_STRING_PRIMITIVE);
+    thermal_byte_0 = prime_and_get_cpuid(CPUID_THERMAL_STRING_PRIMITIVE);
     pid = fork();
     if (!pid) attacker_write_char(writer_cpu);
     attacker_read_char(reader_cpu, 50);
