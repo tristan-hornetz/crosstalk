@@ -10,15 +10,6 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#if defined(__x86_64__)
-int fallout_compatible(){return 1;}
-#elif defined(__i386__)
-int fallout_compatible(){return 1;}
-#else
-
-int fallout_compatible() { return 0; }
-
-#endif
 
 ssize_t page_size;
 jmp_buf buf;
@@ -142,7 +133,10 @@ static inline int get_min(uint64_t *buffer, int len) {
     return min_i;
 }
 
-
+/**
+ * Flush the relevant cache lines
+ * @param mem The FLUSH+RELOAD buffer
+ */
 int flush_cache(void *mem) {
     flush_mem(mem);
 }
@@ -193,11 +187,22 @@ static inline __attribute__((always_inline)) int lfb_read_taa(void *mem, int off
     return -1;
 }
 
+/**
+ * Read first byte of the LFB
+ * @param mem The FLUSH+RELOAD buffer
+ * @return The LFB value
+ */
 int lfb_read(void *mem) {
     if(!use_taa) return lfb_read_basic(mem, 0);
     return lfb_read_taa(mem, 0);
 }
 
+/**
+ * Read the byte with index 'offset' from the LFB
+ * @param mem The FLUSH+RELOAD buffer
+ * @param offset The offset
+ * @return The LFB value
+ */
 int lfb_read_offset(void *mem, int offset) {
     if(!use_taa) return lfb_read_basic(mem, offset);
     return lfb_read_taa(mem, offset);
@@ -208,7 +213,11 @@ int lfb_read_offset(void *mem, int offset) {
 static inline __attribute__((always_inline)) void lfb_leak(void *mem, uint8_t *ptr) {
     maccess(mem + page_size * (*ptr));
 }
-
+/**
+ * Read first byte of the LFB
+ * @param mem The FLUSH+RELOAD buffer
+ * @return The LFB value
+ */
 int lfb_read(void *mem) {
     int i = 0;
     if (!setjmp(buf)) {
@@ -221,7 +230,12 @@ int lfb_read(void *mem) {
     }
     return -1;
 }
-
+/**
+ * Read the byte with index 'offset' from the LFB
+ * @param mem The FLUSH+RELOAD buffer
+ * @param offset The offset
+ * @return The LFB value
+ */
 int lfb_read_offset(void *mem, int offset) {
     int i = 0;
     if (!setjmp(buf)) {
@@ -238,13 +252,23 @@ int lfb_read_offset(void *mem, int offset) {
 int lfb_read_basic(void *mem, int offset){return lfb_read_offset(mem, offset);}
 
 #endif
-
+/**
+ * Perform an LFB vector read
+ * @param mem The FLUSH+RELOAD buffer
+ * @param buf A char buffer with length >= end
+ */
 void lfb_vector_read(void* mem, uint8_t* buf){
     for(int i = 0; i < 64; i++){
         buf[i] = (uint8_t) lfb_read_offset(mem, i);
     }
 }
-
+/**
+ * Perform an LFB vector read
+ * @param mem The FLUSH+RELOAD buffer
+ * @param buf A char buffer with length >= end
+ * @param start Starting index
+ * @param end End index (non-inclusive)
+ */
 void lfb_partial_vector_read(void* mem, uint8_t* buf, int start, int end){
     for(int i = start; i < end; i++){
         buf[i] = (uint8_t) lfb_read_offset(mem, i);
