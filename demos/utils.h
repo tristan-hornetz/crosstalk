@@ -73,7 +73,6 @@ uint8_t* allocate_flush_reload_buffer(){
     uint8_t *mem =
             mmap(NULL, _page_size * 257, PROT_READ | PROT_WRITE,
                  MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB, -1, 0) + 1;
-    memset(mem, 0xFF, _page_size * 256);
     return mem;
 }
 

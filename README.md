@@ -81,13 +81,13 @@ mess with the leaked values.
 
 ## Demo #3: Covert channel across cores
 
-This demo shows how to transmit data across cores. To do so, we call _rdrand_ on one core until we get the char we want to transmit. Aftwards,
-we call _cpuid_ to signal that we're ready and another thread on a different physical core will attempt to pick up the char.
-The approach of this demo is based on the original approach described in the paper.
+This demo aims to transmit data across cores. To do so, we utilise the same principles as with the _rdrand_ demo.
+_rdrand_ is invoked repeatedly until the eight least significant bits of the random value match the char
+that we want to transmit. We can then observe this value from our attacker thread. 
 
 The demo can be started with 
 ```shell
-./demo_string_covert
+./demo_string
  ```
 
 ## Acknowledgements

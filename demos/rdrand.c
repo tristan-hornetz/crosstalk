@@ -54,6 +54,10 @@ int main(int argc, char **args) {
     printf("Running attacker threads on CPU %d and %d.\nRunning victim on CPU %d.\n\n", attacker_cpu1, attacker_cpu2, offcore_cpu);
     fflush(stdout);
     uint8_t * mem = allocate_flush_reload_buffer();
+    if(((int64_t)mem) <= (int64_t)0){
+        printf("Mapping the reload buffer failed. Did you allocate some huge pages?\n");
+        return 1;
+    }
     crosstalk_init(argc, args);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 64 * 256);
     byte_32 = prime_and_get_cpuid(CPUID_BRAND_STRING_3_PRIMITIVE);
