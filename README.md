@@ -60,9 +60,9 @@ Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz************************
  ```
 
 If this is not the case, the other demos are also unlikely to work. Please note
-that some on some CPUs, you need to pass the _--taa_ parameter for this demo to function correctly.
+that on some CPUs, you need to pass the _--taa_ parameter for this demo to function correctly.
 
-## Demo #2: Observing RDRAND calls
+## Demo #2: Observing RDRAND instructions
 
 One instruction that interferes with the global staging buffer is _rdrand_, which invokes the hardware-based
 random number generator. In this demo, a victim thread invokes _rdrand_ every few seconds. 
