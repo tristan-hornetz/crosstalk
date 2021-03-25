@@ -120,7 +120,7 @@ void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fil
     while (reps--) {
         lfb_partial_vector_read(mem, vector, start, end);
         for (int i = start; i < end; i++) {
-            int value = (int) vector[i];
+            unsigned int value = (unsigned int) vector[i];
 #ifndef TSX_AVAILABLE
             if(value < 0xfe)
 #endif
