@@ -67,8 +67,6 @@ that on some CPUs, you need to pass the _--taa_ parameter for this demo to funct
 One instruction that interferes with the global staging buffer is _rdrand_, which invokes the hardware-based
 random number generator. In this demo, a victim thread invokes _rdrand_ every few seconds. 
 An attacker thread on another physical core then attempts to detect the instruction and forwards the result.
-The forwarded number will likely not match the original number completely, but even a slightly similar result
-may enable an attacker to reconstruct cryptographic key material.
 
 The demo can be started with 
 ```shell

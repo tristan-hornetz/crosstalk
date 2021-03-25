@@ -19,4 +19,6 @@ void lfb_partial_vector_read(void* mem, uint8_t* buf, int start, int end);
 
 int lfb_read_basic(void *mem, int offset);
 
+int uses_taa();
+
 #endif //MELTDOWN_BASIC_PRIMITIVES_H

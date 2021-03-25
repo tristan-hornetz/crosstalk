@@ -16,6 +16,8 @@ jmp_buf buf;
 void *ptr = NULL;
 int cache_hit_timing = 150, use_taa = 0;
 
+int uses_taa(){return use_taa;}
+
 #ifdef TSX_AVAILABLE
 static __attribute__((always_inline)) inline unsigned int xbegin(void) {
     unsigned status;
