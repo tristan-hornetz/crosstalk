@@ -88,6 +88,17 @@ The demo can be started with
 ./demo_string
  ```
 
+## Warnings
+
+* We provide this code as-is, without any warranty of any kind. It may cause undesirable behaviour on your system, 
+  or not work at all. You are fully responsible for any consequences that might arise from running this code. Please refer to the license for further information.
+  
+  
+* If you find that your system is susceptible to SRBDS, you should avoid using it as a multi-user system. SGX enclaves and VMs offer no protection. Make sure to install the latest microcode updates (either in your BIOS or your OS).
+
+
+* This code is meant for testing purposes and should not be used on production systems. _Do not run this code on any machine that is not yours, or could be used by another person._
+
 ## Acknowledgements
 
 Parts of this project are based on the [Meltdown Proof-of-Concept](https://github.com/IAIK/meltdown).  
